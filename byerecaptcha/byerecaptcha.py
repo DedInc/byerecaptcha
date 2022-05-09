@@ -201,7 +201,7 @@ def getOutputLayers(net):
         outputLayers = [layerNames[i - 1] for i in layers]
     return outputLayers
 
-def predict(file, net=None):
+def predict(file, net):
     if serverSolve:
         with open(file, 'rb') as f:
             return post(serverUrl, files={'file': (getFileName(file), f)}).json()['predict']
@@ -315,6 +315,8 @@ def solveByImage():
     global net
     if not serverSolve:
         net = dnn.readNet(pjoin(modelDir, 'yolov3.weights'), pjoin(modelDir, 'yolov3.cfg'))
+    else:
+        net = None
     while True:
         result = checkDetection(3)
         if result:
