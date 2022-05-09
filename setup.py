@@ -5,10 +5,10 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='byerecaptcha',
-    version='1.1.7',
+    version='1.2.0',
     author='Maehdakvan',
     author_email='visitanimation@google.com',
-    description='Google Recaptcha solver.',
+    description='Google Recaptcha solver with selenium.',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/DedInc/byerecaptcha',

@@ -4,13 +4,13 @@ from time import sleep, time
 from random import uniform, randint
 from itertools import product
 from zipfile import ZipFile
-from cv2 import imread, imwrite, rectangle, FILLED, dnn
-from selenium import webdriver
+from ntpath import split, basename
+from cv2 import imread, dnn
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support import expected_conditions as EC
-from requests import Session
+from requests import Session, post
 from PIL import Image
 from numpy import sqrt, argmax
 from shutil import rmtree
@@ -30,16 +30,6 @@ def installModel():
     remove(modelZip)
     print('Model installed!')
 
-if exists(modelZip):
-    try:
-        with ZipFile(modelZip, 'r') as z:
-            z.extractall(cdir)
-    except:
-        installModel()
-
-if not exists(modelDir):
-    installModel()
-
 if exists(picturesDir):
     rmtree(picturesDir)
 
@@ -49,6 +39,10 @@ def getPage(url, binary=False, timeout=300):
         if binary:
             return response.content
         return response.text
+
+def getFileName(path):
+    head, tail = split(path)
+    return tail or basename(head)
 
 def saveFile(file, data, binary=False):
     mode = "w" if not binary else "wb"
@@ -65,43 +59,43 @@ def isFrameAttachted(frameReference):
         return True
 
 def hover(element):
-	if element == CheckBox:
-		driver.switch_to.frame(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'iframe'))).get_attribute('name'))
-	ActionChains(driver).move_to_element(element).perform()
+    if element == CheckBox:
+        driver.switch_to.frame(WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'iframe'))).get_attribute('name'))
+    ActionChains(driver).move_to_element(element).perform()
 
 def clickReloadButton():
-	driver.switch_to.frame(imageFrame)
-	driver.find_element_by_id('recaptcha-reload-button').click()
-	driver.switch_to.parent_frame()
+    driver.switch_to.frame(imageFrame)
+    driver.find_element_by_id('recaptcha-reload-button').click()
+    driver.switch_to.parent_frame()
 
 def clickVerify():
-	driver.switch_to.frame(imageFrame)
-	driver.find_element_by_id('recaptcha-verify-button').click()
-	driver.switch_to.parent_frame()
+    driver.switch_to.frame(imageFrame)
+    driver.find_element_by_id('recaptcha-verify-button').click()
+    driver.switch_to.parent_frame()
 
 def getFrames():
-	global recaptchaFrame, CheckBox, imageFrame
-	recaptchaFrame = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'iframe')))
-	driver.switch_to.frame(recaptchaFrame)
-	CheckBox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "recaptcha-anchor")))
-	driver.switch_to.parent_frame()
-	while True:
-		frames = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'iframe[src*="api2/bframe"]')))
-		for frame in frames:
-			if not isFrameAttachted(frame):
-				continue
-		break
-	for frame in frames:
-		driver.switch_to.frame(frame)
-		if 'recaptcha-image-button' in driver.page_source:
-			imageFrame = frame
-		driver.switch_to.parent_frame()
+    global recaptchaFrame, CheckBox, imageFrame
+    recaptchaFrame = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'iframe')))
+    driver.switch_to.frame(recaptchaFrame)
+    CheckBox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "recaptcha-anchor")))
+    driver.switch_to.parent_frame()
+    while True:
+        frames = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'iframe[src*="api2/bframe"]')))
+        for frame in frames:
+            if not isFrameAttachted(frame):
+                continue
+        break
+    for frame in frames:
+        driver.switch_to.frame(frame)
+        if 'recaptcha-image-button' in driver.page_source:
+            imageFrame = frame
+        driver.switch_to.parent_frame()
 
 def clickCheckBox():
-	hover(CheckBox)
-	sleep(uniform(0.5, 0.7))
-	CheckBox.click()
-	driver.switch_to.parent_frame()
+    hover(CheckBox)
+    sleep(uniform(0.5, 0.7))
+    CheckBox.click()
+    driver.switch_to.parent_frame()
 
 def getRecaptchaResponse():
     if driver.execute_script('return document.getElementsByName("g-recaptcha-response")[0].value !== ""'):
@@ -115,28 +109,28 @@ def getImageUrl():
     return imageUrl
 
 def downloadImage():
-	global download
-	download = getImageUrl()
-	return getPage(download, binary=True)
+    global download
+    download = getImageUrl()
+    return getPage(download, binary=True)
 
 def getImages():
-	global pieces
-	driver.switch_to.frame(imageFrame)
-	pieces = driver.execute_script('return document.getElementsByTagName("td").length')
-	driver.switch_to.parent_frame()
+    global pieces
+    driver.switch_to.frame(imageFrame)
+    pieces = driver.execute_script('return document.getElementsByTagName("td").length')
+    driver.switch_to.parent_frame()
 
 def createFolder(title, image):
-	global curImagePath, imageHash
-	imageHash = hash(image)
-	if not exists(picturesDir):
-	    mkdir(picturesDir)
-	if not exists(pjoin(picturesDir, f'{title}')):
-	    mkdir(pjoin(picturesDir, f'{title}'))
-	if not exists(pjoin(picturesDir, 'tmp')):
-	    mkdir(pjoin(picturesDir, 'tmp'))
-	curImagePath = pjoin(pjoin(picturesDir, f'{title}'))
-	if not exists(curImagePath):
-	    mkdir(curImagePath)
+    global curImagePath, imageHash
+    imageHash = hash(image)
+    if not exists(picturesDir):
+        mkdir(picturesDir)
+    if not exists(pjoin(picturesDir, f'{title}')):
+        mkdir(pjoin(picturesDir, f'{title}'))
+    if not exists(pjoin(picturesDir, 'tmp')):
+        mkdir(pjoin(picturesDir, 'tmp'))
+    curImagePath = pjoin(pjoin(picturesDir, f'{title}'))
+    if not exists(curImagePath):
+        mkdir(curImagePath)
 
 def searchTitle(title):
     classes = ('bus', 'car', 'bicycle', 'fire_hydrant', 'crosswalk', 'stair', 'bridge', 'traffic_light',
@@ -164,14 +158,14 @@ def searchTitle(title):
     return title
 
 def getStartData():
-	global title
-	title = searchTitle(descriptionElement.replace(' ', '_'))
-	image = downloadImage()
-	createFolder(title, image)
-	filePath = pjoin(curImagePath, f'{imageHash}_{title}.jpg')
-	saveFile(filePath, image, binary=True)
-	getImages()
-	return filePath
+    global title
+    title = searchTitle(descriptionElement.replace(' ', '_'))
+    image = downloadImage()
+    createFolder(title, image)
+    filePath = pjoin(curImagePath, f'{imageHash}_{title}.jpg')
+    saveFile(filePath, image, binary=True)
+    getImages()
+    return filePath
 
 def checkDetection(timeout):
     global content, descriptionElement
@@ -207,32 +201,33 @@ def getOutputLayers(net):
         outputLayers = [layerNames[i - 1] for i in layers]
     return outputLayers
 
-def predict(net, file):
-    fileNames = pjoin(modelDir, 'yolov3.txt')
+def predict(file, net=None):
+    if serverSolve:
+        with open(file, 'rb') as f:
+            return post(serverUrl, files={'file': (getFileName(file), f)}).json()['predict']
+    else:
+        fileNames = pjoin(modelDir, 'yolov3.txt')
 
-    image = imread(file)
-    width = image.shape[1]
-    height = image.shape[0]
-    scale = 0.00392
+        image = imread(file)
+        scale = 0.00392
 
-    confThreshold = 0.5
-    nmsThreshold = 0.5
+        confThreshold = 0.5
 
-    with open(fileNames, 'r') as f:
-        classes = [line.strip() for line in f.readlines()]
+        with open(fileNames, 'r') as f:
+            classes = [line.strip() for line in f.readlines()]
 
-    blob = dnn.blobFromImage(image, scale, (416, 416), (0, 0, 0), True, crop=False)
-    net.setInput(blob)
-    outs = net.forward(getOutputLayers(net))
-    classesNames = []
-    for out in outs:
-        for detection in out:
-            scores = detection[5:]
-            classId = int(argmax(scores))
-            confidence = scores[classId]
-            if confidence > confThreshold:
-                classesNames.append(classes[classId])
-    return classesNames
+        blob = dnn.blobFromImage(image, scale, (416, 416), (0, 0, 0), True, crop=False)
+        net.setInput(blob)
+        outs = net.forward(getOutputLayers(net))
+        classesNames = []
+        for out in outs:
+            for detection in out:
+                scores = detection[5:]
+                classId = int(argmax(scores))
+                confidence = scores[classId]
+                if confidence > confThreshold:
+                    classesNames.append(classes[classId])
+        return classesNames
 
 def splitImage(imageObj, pieces, save_to, name):
     width, height = imageObj.size
@@ -248,25 +243,24 @@ def choose(imagePath):
         imageObj = Image.open(imagePath)
         splitImage(imageObj, pieces, curImagePath, imageHash)
         for i in range(pieces):
-            result = predict(
-                net, pjoin(curImagePath, f'{imageHash}_{i}.jpg'))
+            result = predict(pjoin(curImagePath, f'{imageHash}_{i}.jpg'), net)
             if title.replace('_', ' ') in result:
                 selected.append(i)
         remove(imagePath)
     return selected
 
 def clickImage(list_id):
-	driver.switch_to.frame(imageFrame)
-	elements = driver.find_elements_by_css_selector('.rc-imageselect-tile')
-	for i in list_id:
-		elements[i].click()
-	driver.switch_to.parent_frame()
+    driver.switch_to.frame(imageFrame)
+    elements = driver.find_elements_by_css_selector('.rc-imageselect-tile')
+    for i in list_id:
+        elements[i].click()
+    driver.switch_to.parent_frame()
 
 def isOneSelected():
-	driver.switch_to.frame(imageFrame)
-	ev = driver.execute_script('return document.getElementsByClassName("rc-imageselect-tileselected").length === 0')
-	driver.switch_to.parent_frame()
-	return ev
+    driver.switch_to.frame(imageFrame)
+    ev = driver.execute_script('return document.getElementsByClassName("rc-imageselect-tileselected").length === 0')
+    driver.switch_to.parent_frame()
+    return ev
 
 def getImagesBlock(images):
     imagesUrl = []
@@ -291,7 +285,7 @@ def cycleSelected(selected):
                     curImagePath, f'{imageHash}_{title}.jpg')
                 saveFile(filePath, image, binary=True)
 
-                result = predict(net, filePath)
+                result = predict(filePath, net)
                 if title == 'vehicles':
                     if 'car' in result or 'truck' in result or 'bus' in result:
                         newSelected.append(selected[i])
@@ -314,55 +308,71 @@ def isFinish():
     return False
 
 def isNext():
-	imageUrl = getImageUrl()
-	return False if imageUrl == download else True
+    imageUrl = getImageUrl()
+    return False if imageUrl == download else True
 
 def solveByImage():
-	global net
-	net = dnn.readNet(pjoin(modelDir, 'yolov3.weights'), pjoin(modelDir, 'yolov3.cfg'))
-	while True:
-	    result = checkDetection(3)
-	    if result:
-	        break
-	    filePath = getStartData()
-	    if pieces == 16:
-	        clickReloadButton()
-	    elif pieces == 9:
-	        choices = choose(filePath)
-	        clickImage(choices)
-	        if choices:
-	            if isOneSelected():
-	                cycleSelected(choices)
-	                clickVerify()
-	                if not isNext() and not isFinish():
-	                    clickReloadButton()
-	            else:
-	                clickVerify()
-	                if not isNext() and not isFinish():
-	                    clickReloadButton()
-	        else:
-	            clickReloadButton()
+    global net
+    if not serverSolve:
+        net = dnn.readNet(pjoin(modelDir, 'yolov3.weights'), pjoin(modelDir, 'yolov3.cfg'))
+    while True:
+        result = checkDetection(3)
+        if result:
+            break
+        filePath = getStartData()
+        if pieces == 16:
+            clickReloadButton()
+        elif pieces == 9:
+            choices = choose(filePath)
+            clickImage(choices)
+            if choices:
+                if isOneSelected():
+                    cycleSelected(choices)
+                    clickVerify()
+                    if not isNext() and not isFinish():
+                        clickReloadButton()
+                else:
+                    clickVerify()
+                    if not isNext() and not isFinish():
+                        clickReloadButton()
+            else:
+                clickReloadButton()
 
 def solveImage():
-	solveByImage()
-	result = getRecaptchaResponse()
-	if result:
-		return result
+    solveByImage()
+    result = getRecaptchaResponse()
+    if result:
+        return result
 
-def solveRecaptcha(browser):
-    global driver
+def solveRecaptcha(browser, server=''):
+    global driver, serverSolve, serverUrl
+
+    if server == '':
+        if exists(modelZip):
+            try:
+                with ZipFile(modelZip, 'r') as z:
+                    z.extractall(cdir)
+            except:
+                installModel()
+
+        if not exists(modelDir):
+            installModel()
+    else:
+        serverUrl = server
+        serverSolve = True
+
     driver = browser
     getFrames()
     clickCheckBox()
     while True:
-    	try:
-    		getFrames()
-    		driver.switch_to.frame(imageFrame)
-    		driver.switch_to.parent_frame()
-    		break
-    	except:
-    		pass
+        try:
+            getFrames()
+            driver.switch_to.frame(imageFrame)
+            driver.switch_to.parent_frame()
+            break
+        except:
+            pass
     result = solveImage()
     rmtree(picturesDir)
     if result:
-    	return result
+        return result

@@ -1,4 +1,4 @@
-<h1 align="center">byerecaptcha - Google Recaptcha solver.</h1>
+<h1 align="center">byerecaptcha - Google Recaptcha solver with selenium.</h1>
 
 <h2>Model and some codes takes from <a href="https://github.com/embium/solverecaptchas">embium's repository</a></h2>
 
@@ -20,5 +20,7 @@ options.add_argument('--lang=en-US') #need for recaptcha be in english
 
 driver = webdriver.Chrome(executable_path=getChromeDriver(), chrome_options=options)
 driver.get('https://www.google.com/recaptcha/api2/demo')
-solveRecaptcha(driver)
+solveRecaptcha(driver) #FOR PREDICTION ON YOUR PC
+
+solveRecaptcha(driver, "https://myserver.com") #FOR PREDICTION IN YOUR SERVER (check server.py)
 ```
