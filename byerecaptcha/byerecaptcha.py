@@ -359,6 +359,7 @@ def solveRecaptcha(browser, server=''):
 
         if not exists(modelDir):
             installModel()
+        serverSolve = False
     else:
         serverUrl = server
         serverSolve = True
