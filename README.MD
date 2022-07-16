@@ -22,5 +22,7 @@ driver = webdriver.Chrome(executable_path=getChromeDriver(), chrome_options=opti
 driver.get('https://www.google.com/recaptcha/api2/demo')
 solveRecaptcha(driver) #FOR PREDICTION ON YOUR PC
 
-solveRecaptcha(driver, "https://myserver.com") #FOR PREDICTION IN YOUR SERVER (check server.py)
+solveRecaptcha(driver, server="https://myserver.com") #FOR PREDICTION IN YOUR SERVER (check server.py)
+
+solveRecaptcha(driver, invisible=True) #FOR PREDICTION INVISIBLE CAPTCHA
 ```

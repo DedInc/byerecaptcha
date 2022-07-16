@@ -73,11 +73,12 @@ def clickVerify():
     driver.find_element_by_id('recaptcha-verify-button').click()
     driver.switch_to.parent_frame()
 
-def getFrames():
+def getFrames(invisible=False):
     global recaptchaFrame, CheckBox, imageFrame
     recaptchaFrame = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'iframe')))
     driver.switch_to.frame(recaptchaFrame)
-    CheckBox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "recaptcha-anchor")))
+    if not invisible:
+        CheckBox = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "recaptcha-anchor")))
     driver.switch_to.parent_frame()
     while True:
         frames = WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'iframe[src*="api2/bframe"]')))
@@ -346,7 +347,7 @@ def solveImage():
     if result:
         return result
 
-def solveRecaptcha(browser, server=''):
+def solveRecaptcha(browser, server='', invisible=False):
     global driver, serverSolve, serverUrl
 
     if server == '':
@@ -364,12 +365,13 @@ def solveRecaptcha(browser, server=''):
         serverUrl = server
         serverSolve = True
 
-    driver = browser
-    getFrames()
-    clickCheckBox()
+    driver = browser    
+    if not invisible:
+        getFrames(invisible)
+        clickCheckBox()
     while True:
         try:
-            getFrames()
+            getFrames(invisible)
             driver.switch_to.frame(imageFrame)
             driver.switch_to.parent_frame()
             break
