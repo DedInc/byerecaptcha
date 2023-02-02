@@ -65,12 +65,12 @@ def hover(element):
 
 def clickReloadButton():
     driver.switch_to.frame(imageFrame)
-    driver.find_element_by_id('recaptcha-reload-button').click()
+    driver.find_element(By.ID, 'recaptcha-reload-button').click()
     driver.switch_to.parent_frame()
 
 def clickVerify():
     driver.switch_to.frame(imageFrame)
-    driver.find_element_by_id('recaptcha-verify-button').click()
+    driver.find_element(By.ID, 'recaptcha-verify-button').click()
     driver.switch_to.parent_frame()
 
 def getFrames(invisible=False):
@@ -252,7 +252,7 @@ def choose(imagePath):
 
 def clickImage(list_id):
     driver.switch_to.frame(imageFrame)
-    elements = driver.find_elements_by_css_selector('.rc-imageselect-tile')
+    elements = driver.find_elements(By.CSS_SELECTOR, '.rc-imageselect-tile')
     for i in list_id:
         elements[i].click()
     driver.switch_to.parent_frame()
