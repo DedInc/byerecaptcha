@@ -21,6 +21,6 @@ setup(
         'Operating System :: OS Independent',
     ],
     packages=find_packages(),
-    install_requires = ['opencv-python', 'Pillow', 'numpy', 'requests', 'selenium==3.141.0'],
+    install_requires = ['opencv-python==4.6.0.66', 'Pillow', 'numpy', 'requests', 'selenium==3.141.0'],
     python_requires='>=3.6',
 )
