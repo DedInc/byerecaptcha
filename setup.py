@@ -5,7 +5,7 @@ with open('README.md', 'r', encoding='utf-8') as f:
 
 setup(
     name='byerecaptcha',
-    version='1.2.3',
+    version='1.2.4',
     author='Maehdakvan',
     author_email='visitanimation@google.com',
     description='Google Recaptcha solver with selenium.',
